@@ -1,0 +1,36 @@
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Build Artifacts
+target/
+dist/
+build/
+out/
+
+# Dependencies
+node_modules/
+venv/
+.venv/
+env/
+__pycache__/
+*.pyc
+
+# ML Models
+ml-service/model/model.pkl
+
+# Secrets and Keys
+API.txt
+.env
+.env.local
+
+# Frontend Build
+frontend/build/
+frontend/.pnp
+frontend/.pnp.js
+
+# Os
+.DS_Store
+Thumbs.db
