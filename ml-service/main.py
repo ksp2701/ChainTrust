@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import os
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -35,10 +36,23 @@ FEATURE_LABELS = {
     "cross_chain_count": "Cross-Chain Txns",
     "rugpull_exposure_score": "Rugpull Exposure",
 }
+=======
+from fastapi import FastAPI, HTTPException
+from predict_schema import FeatureSchema, RiskResult
+import joblib
+import numpy as np
+import os
+
+app = FastAPI(title="ChainTrust ML Service")
+
+MODEL_PATH = "/app/model/model.pkl"
+model = None
+>>>>>>> e6bab9ff3e4c81f53c66b24db7e96dd1d61d97c1
 
 
 @app.on_event("startup")
 def load_model() -> None:
+<<<<<<< HEAD
     global _bundle
     path = os.environ.get("MODEL_PATH", MODEL_PATH)
     if not os.path.exists(path):
@@ -56,19 +70,31 @@ def load_model() -> None:
             "nft_transaction_count", "max_single_tx_eth", "dormant_period_days",
             "collateral_ratio", "cross_chain_count", "rugpull_exposure_score",
         ]}
+=======
+    global model
+    if not os.path.exists(MODEL_PATH):
+        model = None
+        return
+    model = joblib.load(MODEL_PATH)
+>>>>>>> e6bab9ff3e4c81f53c66b24db7e96dd1d61d97c1
 
 
 @app.get("/health")
 def health() -> dict:
     return {
         "status": "ok",
+<<<<<<< HEAD
         "model_loaded": _bundle is not None,
         "features": _bundle["features"] if _bundle else [],
+=======
+        "model_loaded": model is not None,
+>>>>>>> e6bab9ff3e4c81f53c66b24db7e96dd1d61d97c1
     }
 
 
 @app.post("/predict", response_model=RiskResult)
 def predict(feat: FeatureSchema) -> RiskResult:
+<<<<<<< HEAD
     if _bundle is None:
         raise HTTPException(status_code=503, detail="model.pkl not found — run train_model.py first")
 
@@ -143,3 +169,29 @@ def _build_denial_reasons(feat: FeatureSchema, trust_prob: float) -> list:
     if trust_prob > 0.5 and not reasons:
         reasons.append("Wallet meets all credit criteria")
     return reasons
+=======
+    if model is None:
+        raise HTTPException(status_code=503, detail="model.pkl not found; train model first")
+
+    try:
+        x = np.array(
+            [[
+                feat.wallet_age_days,
+                feat.tx_count,
+                feat.avg_tx_value,
+                feat.unique_contracts,
+                feat.incoming_outgoing_ratio,
+                feat.tx_variance,
+            ]]
+        )
+        if hasattr(model, "predict_proba"):
+            prob = float(model.predict_proba(x)[0][1])
+        else:
+            prob = float(model.predict(x)[0])
+
+        prob = max(0.0, min(1.0, prob))
+        level = "LOW" if prob < 0.4 else ("MEDIUM" if prob < 0.7 else "HIGH")
+        return RiskResult(risk_score=prob, risk_level=level)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+>>>>>>> e6bab9ff3e4c81f53c66b24db7e96dd1d61d97c1

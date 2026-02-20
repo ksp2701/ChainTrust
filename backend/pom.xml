@@ -48,6 +48,7 @@
       <artifactId>spring-boot-starter-test</artifactId>
       <scope>test</scope>
     </dependency>
+<<<<<<< HEAD
 
     <!-- H2 in-memory DB for local dev (no PostgreSQL required) -->
     <dependency>
@@ -55,6 +56,8 @@
       <artifactId>h2</artifactId>
       <scope>runtime</scope>
     </dependency>
+=======
+>>>>>>> e6bab9ff3e4c81f53c66b24db7e96dd1d61d97c1
   </dependencies>
 
   <build>

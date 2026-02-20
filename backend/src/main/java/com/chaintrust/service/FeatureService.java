@@ -25,6 +25,7 @@ public class FeatureService {
         clean.setTxCount(Math.max(0, input.getTxCount()));
         clean.setAvgTxValue(Math.max(0.0, input.getAvgTxValue()));
         clean.setUniqueContracts(Math.max(0, input.getUniqueContracts()));
+<<<<<<< HEAD
         clean.setIncomingOutgoingRatio(clamp(input.getIncomingOutgoingRatio(), 0, 1));
         clean.setTxVariance(Math.max(0.0, input.getTxVariance()));
         clean.setDefiProtocolCount(Math.max(0, input.getDefiProtocolCount()));
@@ -40,11 +41,16 @@ public class FeatureService {
         clean.setLastSeenDate(input.getLastSeenDate());
         clean.setTotalVolumeEth(Math.max(0, input.getTotalVolumeEth()));
         clean.setKnownProtocols(input.getKnownProtocols());
+=======
+        clean.setIncomingOutgoingRatio(Math.max(0.0, input.getIncomingOutgoingRatio()));
+        clean.setTxVariance(Math.max(0.0, input.getTxVariance()));
+>>>>>>> e6bab9ff3e4c81f53c66b24db7e96dd1d61d97c1
         return clean;
     }
 
     public Map<String, Object> toMlPayload(WalletFeatures features) {
         Map<String, Object> payload = new HashMap<>();
+<<<<<<< HEAD
         // Core
         payload.put("wallet_age_days", features.getWalletAgeDays());
         payload.put("tx_count", features.getTxCount());
@@ -68,4 +74,14 @@ public class FeatureService {
     private static double clamp(double v, double min, double max) {
         return Math.max(min, Math.min(max, v));
     }
+=======
+        payload.put("wallet_age_days", features.getWalletAgeDays());
+        payload.put("tx_count", features.getTxCount());
+        payload.put("avg_tx_value", features.getAvgTxValue());
+        payload.put("unique_contracts", features.getUniqueContracts());
+        payload.put("incoming_outgoing_ratio", features.getIncomingOutgoingRatio());
+        payload.put("tx_variance", features.getTxVariance());
+        return payload;
+    }
+>>>>>>> e6bab9ff3e4c81f53c66b24db7e96dd1d61d97c1
 }

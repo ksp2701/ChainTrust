@@ -1,5 +1,6 @@
 package com.chaintrust.model;
 
+<<<<<<< HEAD
 import java.util.List;
 
 public class LoanRequest {
@@ -30,4 +31,35 @@ public class LoanRequest {
 
     public String getPurpose() { return purpose; }
     public void setPurpose(String purpose) { this.purpose = purpose; }
+=======
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Positive;
+
+public class LoanRequest {
+
+    @NotBlank
+    private String walletAddress;
+
+    @Positive
+    private double amount;
+
+    public LoanRequest() {
+    }
+
+    public String getWalletAddress() {
+        return walletAddress;
+    }
+
+    public void setWalletAddress(String walletAddress) {
+        this.walletAddress = walletAddress;
+    }
+
+    public double getAmount() {
+        return amount;
+    }
+
+    public void setAmount(double amount) {
+        this.amount = amount;
+    }
+>>>>>>> e6bab9ff3e4c81f53c66b24db7e96dd1d61d97c1
 }

@@ -8,7 +8,12 @@ import org.springframework.stereotype.Service;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+<<<<<<< HEAD
 import java.util.*;
+=======
+import java.util.LinkedHashMap;
+import java.util.Map;
+>>>>>>> e6bab9ff3e4c81f53c66b24db7e96dd1d61d97c1
 
 @Service
 public class LoanService {
@@ -28,6 +33,7 @@ public class LoanService {
 
         WalletFeatures features = walletService.extractFeatures(loanRequest.getWalletAddress());
         RiskResult riskResult = riskServiceClient.predict(features);
+<<<<<<< HEAD
 
         double riskScore = riskResult.getRiskScore(); // 0=safe, 1=risky
         double trustScore = 1.0 - riskScore;          // 0=risky, 1=safe
@@ -78,10 +84,14 @@ public class LoanService {
                 + approved + ":"
                 + riskResult.getRiskScore() + ":"
                 + creditTier;
+=======
+        boolean approved = riskResult.getRiskScore() < 0.60;
+>>>>>>> e6bab9ff3e4c81f53c66b24db7e96dd1d61d97c1
 
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("walletAddress", loanRequest.getWalletAddress());
         response.put("amount", loanRequest.getAmount());
+<<<<<<< HEAD
         response.put("approved", approved);
         response.put("creditTier", creditTier);
         response.put("trustScore", Math.round(trustScore * 1000.0) / 1000.0);
@@ -100,10 +110,19 @@ public class LoanService {
         response.put("flashLoanCount", features.getFlashLoanCount());
         response.put("decisionHash", sha256Hex(decisionPayload));
         response.put("timestamp", System.currentTimeMillis());
+=======
+        response.put("riskScore", riskResult.getRiskScore());
+        response.put("riskLevel", riskResult.getRiskLevel());
+        response.put("approved", approved);
+
+        String decisionPayload = loanRequest.getWalletAddress() + ":" + loanRequest.getAmount() + ":" + approved + ":" + riskResult.getRiskScore();
+        response.put("decisionHash", sha256Hex(decisionPayload));
+>>>>>>> e6bab9ff3e4c81f53c66b24db7e96dd1d61d97c1
 
         return response;
     }
 
+<<<<<<< HEAD
     private List<String> buildLoanReasons(WalletFeatures f, RiskResult risk, boolean approved,
                                           String tier, double requestedAmount, double recommendedLimit) {
         List<String> reasons = new ArrayList<>();
@@ -160,12 +179,20 @@ public class LoanService {
         return reasons;
     }
 
+=======
+>>>>>>> e6bab9ff3e4c81f53c66b24db7e96dd1d61d97c1
     private String sha256Hex(String value) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             byte[] hash = digest.digest(value.getBytes(StandardCharsets.UTF_8));
             StringBuilder sb = new StringBuilder(hash.length * 2);
+<<<<<<< HEAD
             for (byte b : hash) sb.append(String.format("%02x", b));
+=======
+            for (byte b : hash) {
+                sb.append(String.format("%02x", b));
+            }
+>>>>>>> e6bab9ff3e4c81f53c66b24db7e96dd1d61d97c1
             return sb.toString();
         } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException("SHA-256 not available", e);

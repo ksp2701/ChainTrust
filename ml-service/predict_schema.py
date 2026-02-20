@@ -1,4 +1,5 @@
 from pydantic import BaseModel, Field
+<<<<<<< HEAD
 from typing import Optional, Dict
 
 
@@ -24,10 +25,24 @@ class FeatureSchema(BaseModel):
 
     class Config:
         populate_by_name = True
+=======
+
+
+class FeatureSchema(BaseModel):
+    wallet_age_days: float = Field(ge=0)
+    tx_count: int = Field(ge=0)
+    avg_tx_value: float = Field(ge=0)
+    unique_contracts: int = Field(ge=0)
+    incoming_outgoing_ratio: float = Field(ge=0)
+    tx_variance: float = Field(ge=0)
+>>>>>>> e6bab9ff3e4c81f53c66b24db7e96dd1d61d97c1
 
 
 class RiskResult(BaseModel):
     risk_score: float
     risk_level: str
+<<<<<<< HEAD
     feature_contributions: Optional[Dict[str, float]] = None
     denial_reasons: Optional[list] = None
+=======
+>>>>>>> e6bab9ff3e4c81f53c66b24db7e96dd1d61d97c1

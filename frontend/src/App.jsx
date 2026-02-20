@@ -1,4 +1,5 @@
 import React from "react";
+<<<<<<< HEAD
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import HomePage from "./pages/HomePage";
@@ -24,5 +25,20 @@ export default function App() {
         </main>
       </div>
     </BrowserRouter>
+=======
+import WalletInput from "./components/WalletInput";
+
+export default function App() {
+  return (
+    <div className="page">
+      <div className="card">
+        <h1>ChainTrust Wallet Risk Analyzer</h1>
+        <p className="subtitle">
+          Analyze wallet activity, score risk via ML, and generate a loan decision hash.
+        </p>
+        <WalletInput />
+      </div>
+    </div>
+>>>>>>> e6bab9ff3e4c81f53c66b24db7e96dd1d61d97c1
   );
 }

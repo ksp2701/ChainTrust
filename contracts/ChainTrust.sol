@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
+<<<<<<< HEAD
 /**
  * @title ChainTrust – DeFi Lending Protocol Credit Registry
  * @notice On-chain record of loan applications, decisions, and repayment history.
@@ -85,10 +86,26 @@ contract ChainTrust {
 
     // ── Constructor ────────────────────────────────────────────────────────
 
+=======
+contract ChainTrust {
+    address public owner;
+    mapping(address => bytes32[]) public riskHistory;
+    mapping(address => bool) public blacklist;
+
+    event RiskStored(address indexed wallet, bytes32 indexed riskHash);
+    event LoanRecorded(address indexed wallet, uint256 amount, bool approved);
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, "owner only");
+        _;
+    }
+
+>>>>>>> e6bab9ff3e4c81f53c66b24db7e96dd1d61d97c1
     constructor() {
         owner = msg.sender;
     }
 
+<<<<<<< HEAD
     // ── Core loan lifecycle ────────────────────────────────────────────────
 
     /**
@@ -216,5 +233,22 @@ contract ChainTrust {
         external view returns (uint256)
     {
         return _loanHistory[wallet].length;
+=======
+    function storeRiskHash(address wallet, bytes32 riskHash) external onlyOwner {
+        riskHistory[wallet].push(riskHash);
+        emit RiskStored(wallet, riskHash);
+    }
+
+    function recordLoan(address wallet, uint256 amount, bool approved) external onlyOwner {
+        emit LoanRecorded(wallet, amount, approved);
+    }
+
+    function setBlacklist(address wallet, bool value) external onlyOwner {
+        blacklist[wallet] = value;
+    }
+
+    function getRiskHistory(address wallet) external view returns (bytes32[] memory) {
+        return riskHistory[wallet];
+>>>>>>> e6bab9ff3e4c81f53c66b24db7e96dd1d61d97c1
     }
 }

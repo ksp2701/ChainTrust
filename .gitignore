@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # IDEs
 .idea/
 .vscode/
@@ -34,3 +35,30 @@ frontend/.pnp.js
 # Os
 .DS_Store
 Thumbs.db
+=======
+# OS
+.DS_Store
+Thumbs.db
+
+# Env
+.env
+
+# Java
+backend/target/
+*.log
+
+# Node
+frontend/node_modules/
+frontend/build/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.venv/
+
+# Model artifacts
+ml-service/model/*.pkl
+!ml-service/model/.gitkeep
+>>>>>>> e6bab9ff3e4c81f53c66b24db7e96dd1d61d97c1
