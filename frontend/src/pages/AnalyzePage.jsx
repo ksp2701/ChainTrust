@@ -8,21 +8,21 @@ const BACKEND = process.env.REACT_APP_BACKEND_URL || "http://localhost:8080";
 const ETH_RE = /^0x[a-fA-F0-9]{40}$/;
 
 const FEATURE_DISPLAY = [
-    { key: "walletAgeDays", label: "Wallet Age", unit: "days", good: "high" },
-    { key: "txCount", label: "Tx Count", unit: "", good: "high" },
-    { key: "avgTxValue", label: "Avg Tx Value", unit: "ETH", good: "low" },
-    { key: "uniqueContracts", label: "Unique Contracts", unit: "", good: "high" },
-    { key: "incomingOutgoingRatio", label: "I/O Ratio", unit: "", good: "high" },
-    { key: "txVariance", label: "Tx Variance", unit: "", good: "low" },
-    { key: "defiProtocolCount", label: "DeFi Protocols", unit: "", good: "high" },
-    { key: "flashLoanCount", label: "Flash Loans", unit: "", good: "low" },
-    { key: "liquidationEvents", label: "Liquidations", unit: "", good: "low" },
-    { key: "nftTransactionCount", label: "NFT Txns", unit: "", good: "high" },
-    { key: "maxSingleTxEth", label: "Max Single Tx", unit: "ETH", good: "none" },
-    { key: "dormantPeriodDays", label: "Max Dormancy", unit: "days", good: "low" },
-    { key: "collateralRatio", label: "Collateral Ratio", unit: "x", good: "high" },
-    { key: "crossChainCount", label: "Cross-Chain Txns", unit: "", good: "high" },
-    { key: "rugpullExposureScore", label: "Rugpull Exposure", unit: "%", good: "low" },
+    { key: "walletAgeDays", label: "Wallet Age", unit: "days", good: "high", lowOk: 30 },
+    { key: "txCount", label: "Tx Count", unit: "", good: "high", lowOk: 10 },
+    { key: "avgTxValue", label: "Avg Tx Value", unit: "ETH", good: "low", dangerAbove: 5.0 },
+    { key: "uniqueContracts", label: "Unique Contracts", unit: "", good: "high", lowOk: 0 },
+    { key: "incomingOutgoingRatio", label: "I/O Ratio", unit: "", good: "high", lowOk: 0.2 },
+    { key: "txVariance", label: "Tx Variance", unit: "", good: "low", dangerAbove: 2.0 },
+    { key: "defiProtocolCount", label: "DeFi Protocols", unit: "", good: "high", lowOk: 1 },
+    { key: "flashLoanCount", label: "Flash Loans", unit: "", good: "low", dangerAbove: 2 },
+    { key: "liquidationEvents", label: "Liquidations", unit: "", good: "low", dangerAbove: 0 },
+    { key: "nftTransactionCount", label: "NFT Txns", unit: "", good: "high", lowOk: 0 },
+    { key: "maxSingleTxEth", label: "Max Single Tx", unit: "ETH", good: "none", dangerAbove: null },
+    { key: "dormantPeriodDays", label: "Max Dormancy", unit: "days", good: "low", dangerAbove: 180 },
+    { key: "collateralRatio", label: "Collateral Ratio", unit: "x", good: "high", lowOk: 1.2 },
+    { key: "crossChainCount", label: "Cross-Chain Txns", unit: "", good: "high", lowOk: 1 },
+    { key: "rugpullExposureScore", label: "Rugpull Exposure", unit: "%", good: "low", dangerAbove: 0.1 },
 ];
 
 export default function AnalyzePage({ onOpenLogin, currentUser }) {
@@ -148,15 +148,21 @@ export default function AnalyzePage({ onOpenLogin, currentUser }) {
                             <div className="glass-card" style={{ padding: 20 }}>
                                 <div className="section-title" style={{ marginBottom: 16 }}>Feature Breakdown</div>
                                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                                    {FEATURE_DISPLAY.map(({ key, label, unit, good }) => {
+                                    {FEATURE_DISPLAY.map(({ key, label, unit, good, dangerAbove, lowOk }) => {
                                         const raw = features[key] ?? 0;
                                         const val = unit === "%" ? (raw * 100).toFixed(1) : typeof raw === "number" ? raw.toFixed(raw < 10 ? 3 : 0) : raw;
-                                        const color = good === "high"
-                                            ? (raw > 0 ? "var(--success)" : "var(--warning)")
-                                            : good === "low"
-                                                ? (raw > 0 ? "var(--danger)" : "var(--success)")
-                                                : "var(--text-primary)";
-                                        const isRisk = good === "low" && raw > 0;
+
+                                        let color;
+                                        if (good === "high") {
+                                            color = raw >= (lowOk ?? 0) ? "var(--success)" : "var(--warning)";
+                                        } else if (good === "low") {
+                                            const threshold = dangerAbove ?? 0;
+                                            color = raw > threshold ? "var(--danger)" : "var(--success)";
+                                        } else {
+                                            color = "var(--text-primary)";
+                                        }
+
+                                        const isRisk = good === "low" && raw > (dangerAbove ?? 0);
                                         return (
                                             <div key={key} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                                 <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>{label}</span>
