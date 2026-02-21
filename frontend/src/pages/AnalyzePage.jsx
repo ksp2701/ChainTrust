@@ -38,13 +38,10 @@ export default function AnalyzePage({ onOpenLogin, currentUser }) {
         if (!ETH_RE.test(addr)) { setError("Enter a valid EVM wallet address (0x…40 hex chars)"); return; }
         setError(""); setFeatures(null); setRisk(null); setLoading(true);
         try {
-            const [fResp, rResp] = await Promise.all([
-                axios.get(`${BACKEND}/wallet/${addr}`),
-                axios.get(`${BACKEND}/wallet/${addr}`).then(r =>
-                    axios.post(`${BACKEND}/risk`, r.data)
-                ),
-            ]);
+            const fResp = await axios.get(`${BACKEND}/wallet/${addr}`);
             setFeatures(fResp.data);
+
+            const rResp = await axios.post(`${BACKEND}/risk`, fResp.data);
             setRisk(rResp.data);
         } catch (err) {
             setError(err?.response?.data?.message || err?.response?.data?.detail || err.message || "Request failed");
