@@ -181,12 +181,6 @@ Fill required keys in `.env`:
 docker compose up --build
 ```
 
-### 3) Open apps
-
-- Frontend runs on port `3000`.
-- Backend runs on port `8080`.
-- ML service runs on port `8000`.
-
 ### 4) Optional: retrain model artifacts
 
 Use this after you have labeled outcomes (`/loan/outcome`) available:
