@@ -1,6 +1,6 @@
+from typing import Dict, Optional
+
 from pydantic import BaseModel, Field
-<<<<<<< HEAD
-from typing import Optional, Dict
 
 
 class FeatureSchema(BaseModel):
@@ -8,7 +8,7 @@ class FeatureSchema(BaseModel):
     tx_count: int = Field(ge=0, description="Total transaction count")
     avg_tx_value_eth: float = Field(ge=0, description="Average transaction value in ETH")
     unique_contracts: int = Field(ge=0, description="Number of unique contracts interacted")
-    incoming_outgoing_ratio: float = Field(ge=0, description="Incoming vs outgoing tx ratio (0-1)")
+    incoming_outgoing_ratio: float = Field(ge=0, description="Incoming vs outgoing tx ratio")
     tx_variance: float = Field(ge=0, description="Variance in transaction values")
     defi_protocol_count: int = Field(ge=0, description="Number of unique DeFi protocols used")
     flash_loan_count: int = Field(ge=0, description="Number of flash loan transactions")
@@ -18,31 +18,19 @@ class FeatureSchema(BaseModel):
     dormant_period_days: float = Field(ge=0, description="Longest dormant period in days")
     collateral_ratio: float = Field(ge=0, description="Average collateral ratio across DeFi positions")
     cross_chain_count: int = Field(ge=0, description="Number of cross-chain transactions")
-    rugpull_exposure_score: float = Field(ge=0, le=1, description="Exposure to known rugpull contracts")
+    rugpull_exposure_score: float = Field(
+        ge=0, le=1, description="Exposure to known rugpull contracts"
+    )
 
-    # Keep backward-compatible alias
+    # Backward-compatible alias
     avg_tx_value: Optional[float] = Field(default=None, ge=0)
 
     class Config:
         populate_by_name = True
-=======
-
-
-class FeatureSchema(BaseModel):
-    wallet_age_days: float = Field(ge=0)
-    tx_count: int = Field(ge=0)
-    avg_tx_value: float = Field(ge=0)
-    unique_contracts: int = Field(ge=0)
-    incoming_outgoing_ratio: float = Field(ge=0)
-    tx_variance: float = Field(ge=0)
->>>>>>> e6bab9ff3e4c81f53c66b24db7e96dd1d61d97c1
 
 
 class RiskResult(BaseModel):
     risk_score: float
     risk_level: str
-<<<<<<< HEAD
     feature_contributions: Optional[Dict[str, float]] = None
-    denial_reasons: Optional[list] = None
-=======
->>>>>>> e6bab9ff3e4c81f53c66b24db7e96dd1d61d97c1
+    denial_reasons: Optional[list[str]] = None
