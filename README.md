@@ -41,7 +41,7 @@ It combines:
 ![Analyze Main](images/analyze.png)
 ![Analyze Details 1](images/analyze1.png)
 ![Analyze Details 2](images/analyze2.png)
-![Analyze Details 3](images/analyze4.png)
+![Analyze Details 4 (analyze4.png)](images/analyze4.png)
 
 ### Loan Decision
 ![Loan Approved](images/Loanapproved.png)
