@@ -98,7 +98,76 @@ public class WalletHistoryService {
         }
     }
 
+    /**
+     * Fetches the timestamp of the very first transaction ever made by this wallet.
+     * Uses sort=asc&offset=1 so we only need 1 record regardless of total tx count.
+     * Returns -1 if unavailable.
+     */
+    public long fetchFirstTxTimestamp(String address) {
+        if (apiKeys.isEmpty()) return -1;
+        for (String key : orderedApiKeys()) {
+            try {
+                String url = "https://api.etherscan.io/v2/api"
+                        + "?chainid=" + etherscanChainId
+                        + "&module=account&action=txlist"
+                        + "&address=" + address
+                        + "&startblock=0&endblock=99999999"
+                        + "&page=1&offset=1&sort=asc"
+                        + "&apikey=" + key;
+                Map<String, Object> resp = restTemplate.getForObject(url, Map.class);
+                if (resp == null) continue;
+                Object resultObj = resp.get("result");
+                if ("1".equals(str(resp.get("status"))) && resultObj instanceof List<?> rawList && !((List<?>) rawList).isEmpty()) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> first = (Map<String, Object>) ((List<?>) rawList).get(0);
+                    long ts = parseLong(first.get("timeStamp"));
+                    if (ts > 0) return ts;
+                }
+            } catch (Exception ignored) {}
+        }
+        return -1;
+    }
+
+    /**
+     * Fetches the total outgoing transaction count (nonce) via eth_getTransactionCount.
+     * This is the true total tx count for an EOA wallet, regardless of the 100-tx fetch limit.
+     * Returns -1 if unavailable.
+     */
+    public long fetchTotalTxCount(String address) {
+        if (apiKeys.isEmpty()) return -1;
+        for (String key : orderedApiKeys()) {
+            try {
+                String url = "https://api.etherscan.io/v2/api"
+                        + "?chainid=" + etherscanChainId
+                        + "&module=proxy&action=eth_getTransactionCount"
+                        + "&address=" + address
+                        + "&tag=latest"
+                        + "&apikey=" + key;
+                Map<String, Object> resp = restTemplate.getForObject(url, Map.class);
+                if (resp == null) continue;
+                String hexResult = str(resp.get("result"));
+                if (hexResult != null && hexResult.startsWith("0x")) {
+                    long count = Long.parseLong(hexResult.substring(2), 16);
+                    if (count >= 0) return count;
+                }
+            } catch (Exception ignored) {}
+        }
+        return -1;
+    }
+
     public WalletFeatures deriveFeatures(String address, List<TxRecord> txs) {
+        return deriveFeatures(address, txs, -1, -1);
+    }
+
+    /**
+     * Derives ML features from the fetched transaction list.
+     *
+     * @param firstTxTimestamp  true first-ever tx timestamp from fetchFirstTxTimestamp() — used for accurate wallet age.
+     *                          Pass -1 to fall back to the oldest tx in the list (may undercount for active wallets).
+     * @param totalTxCount      true total tx count from fetchTotalTxCount() — used instead of list size.
+     *                          Pass -1 to fall back to list size.
+     */
+    public WalletFeatures deriveFeatures(String address, List<TxRecord> txs, long firstTxTimestamp, long totalTxCount) {
         WalletFeatures f = new WalletFeatures();
         f.setAddress(address);
 
@@ -112,9 +181,14 @@ public class WalletHistoryService {
         long maxTs = txs.stream().mapToLong(TxRecord::getTimestamp).max().orElse(Instant.now().getEpochSecond());
         long nowTs = Instant.now().getEpochSecond();
 
-        long walletAgeDays = Math.max(1, (nowTs - minTs) / 86400);
+        // Use the true first-tx timestamp if available (more accurate for wallets with >100 txs)
+        long ageBaseTs = (firstTxTimestamp > 0) ? firstTxTimestamp : minTs;
+        long walletAgeDays = Math.max(1, (nowTs - ageBaseTs) / 86400);
         f.setWalletAgeDays(walletAgeDays);
-        f.setTxCount(txs.size());
+
+        // Use true total tx count if available, else fall back to list size
+        long effectiveTxCount = (totalTxCount > 0) ? totalTxCount : txs.size();
+        f.setTxCount((int) Math.min(effectiveTxCount, Integer.MAX_VALUE));
         f.setFirstSeenDate(LocalDate.ofInstant(Instant.ofEpochSecond(minTs), ZoneOffset.UTC).format(DATE_FMT));
         f.setLastSeenDate(LocalDate.ofInstant(Instant.ofEpochSecond(maxTs), ZoneOffset.UTC).format(DATE_FMT));
 

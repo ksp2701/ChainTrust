@@ -21,7 +21,9 @@ public class WalletService {
     public WalletFeatures extractFeatures(String address) {
         requireValidAddress(address);
         List<TxRecord> txs = historyService.fetchHistory(address);
-        return historyService.deriveFeatures(address, txs);
+        long firstTxTs  = historyService.fetchFirstTxTimestamp(address);
+        long totalTxCnt = historyService.fetchTotalTxCount(address);
+        return historyService.deriveFeatures(address, txs, firstTxTs, totalTxCnt);
     }
 
     public void requireValidAddress(String address) {
