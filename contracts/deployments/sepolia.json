@@ -1,0 +1,10 @@
+{
+  "contractName": "ChainTrust",
+  "network": "sepolia",
+  "chainId": 11155111,
+  "address": "0x75F3176bafD65629c7871fE06faEe1E66a948752",
+  "owner": "0x9DE144Db4AE6A04819c961C52B11bF49b9d45EAa",
+  "deployer": "0x9DE144Db4AE6A04819c961C52B11bF49b9d45EAa",
+  "deploymentTxHash": "0x5ae342c4e8ce827338c7e28fd55a6f0ace3caf684fa258c6469ac9746949e7bb",
+  "deployedAt": "2026-02-21T20:12:25.650Z"
+}
