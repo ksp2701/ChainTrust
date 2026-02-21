@@ -222,7 +222,7 @@ cd contracts
 npm run deploy:local
 ```
 
-Use deployment output from `contracts/deployments/localhost.json` in root `.env`.
+Use deployment output from `contracts/deployments/` in root `.env`.
 
 ### Option B: Sepolia deployment
 
