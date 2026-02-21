@@ -15,10 +15,13 @@ export default function LoanDecisionCard({ loanResult }) {
 
     const {
         approved, creditTier = "REJECTED", trustScore, riskScore,
-        interestRatePercent, recommendedLimit, reasons = [],
+        interestRatePercent, recommendedLimit, reasons,
         decisionHash, walletAddress, amount, timestamp,
-        defiProtocolCount, collateralRatio, liquidationEvents, knownProtocols = []
+        defiProtocolCount, collateralRatio, liquidationEvents, knownProtocols
     } = loanResult;
+
+    const safeReasons = Array.isArray(reasons) ? reasons : [];
+    const safeKnownProtocols = Array.isArray(knownProtocols) ? knownProtocols : [];
 
     const tierMeta = TIER_META[creditTier] || TIER_META.REJECTED;
     const trustPct = Math.round((trustScore ?? 0) * 100);
@@ -81,11 +84,11 @@ export default function LoanDecisionCard({ loanResult }) {
             </div>
 
             {/* DeFi profile */}
-            {(defiProtocolCount > 0 || knownProtocols.length > 0) && (
+            {(defiProtocolCount > 0 || safeKnownProtocols.length > 0) && (
                 <div style={{ marginBottom: 20 }}>
                     <div className="label-sm" style={{ marginBottom: 8 }}>DeFi Activity</div>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                        {knownProtocols.slice(0, 8).map((p) => (
+                        {safeKnownProtocols.slice(0, 8).map((p) => (
                             <span key={p} className="badge badge-cyan" style={{ fontSize: 10 }}>{p}</span>
                         ))}
                         {defiProtocolCount > 0 && (
@@ -96,11 +99,11 @@ export default function LoanDecisionCard({ loanResult }) {
             )}
 
             {/* Reasons list */}
-            {reasons.length > 0 && (
+            {safeReasons.length > 0 && (
                 <div style={{ marginBottom: 20 }}>
                     <div className="label-sm" style={{ marginBottom: 10 }}>Decision Rationale</div>
                     <ul className="feature-list">
-                        {reasons.map((r, i) => (
+                        {safeReasons.map((r, i) => (
                             <li key={i} className="feature-item" style={{ fontSize: 13, color: "var(--text-primary)" }}>
                                 <span>{r}</span>
                             </li>

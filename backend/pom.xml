@@ -42,13 +42,16 @@
       <artifactId>core</artifactId>
       <version>4.8.7</version>
     </dependency>
+    <dependency>
+      <groupId>org.springframework.security</groupId>
+      <artifactId>spring-security-crypto</artifactId>
+    </dependency>
 
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
       <scope>test</scope>
     </dependency>
-<<<<<<< HEAD
 
     <!-- H2 in-memory DB for local dev (no PostgreSQL required) -->
     <dependency>
@@ -56,8 +59,6 @@
       <artifactId>h2</artifactId>
       <scope>runtime</scope>
     </dependency>
-=======
->>>>>>> e6bab9ff3e4c81f53c66b24db7e96dd1d61d97c1
   </dependencies>
 
   <build>

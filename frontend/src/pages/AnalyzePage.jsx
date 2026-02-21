@@ -25,7 +25,7 @@ const FEATURE_DISPLAY = [
     { key: "rugpullExposureScore", label: "Rugpull Exposure", unit: "%", good: "low" },
 ];
 
-export default function AnalyzePage() {
+export default function AnalyzePage({ onOpenLogin, currentUser }) {
     const [address, setAddress] = useState("");
     const [features, setFeatures] = useState(null);
     const [risk, setRisk] = useState(null);
@@ -70,6 +70,13 @@ export default function AnalyzePage() {
                     <p className="section-subtitle" style={{ marginTop: 8, fontSize: 15 }}>
                         Enter any EVM address to get a full DeFi credit profile powered by 15 on-chain features.
                     </p>
+                    {!currentUser && (
+                        <div style={{ marginTop: 14 }}>
+                            <button type="button" className="btn btn-ghost btn-sm" onClick={onOpenLogin}>
+                                Login to save your profile
+                            </button>
+                        </div>
+                    )}
                 </div>
 
                 {/* Search bar */}

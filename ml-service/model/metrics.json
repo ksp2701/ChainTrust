@@ -1,0 +1,40 @@
+{
+  "generated_at": "2026-02-21T08:29:38.138740+00:00",
+  "source": "api",
+  "sample_count": 400,
+  "label_distribution": {
+    "0": 200,
+    "1": 200
+  },
+  "grouping": {
+    "group_feature": "wallet_address",
+    "groups_used": true,
+    "unique_group_count": 383,
+    "train_test_wallet_overlap_count": 0
+  },
+  "cross_validation": {
+    "folds": 5,
+    "accuracy_mean": 0.9297895128023569,
+    "accuracy_std": 0.03385771829955911,
+    "roc_auc_mean": 0.9760259274974551,
+    "roc_auc_std": 0.018826852888381925
+  },
+  "repeated_group_holdout": {
+    "repeats": 10,
+    "accuracy_mean": 0.9315263699714919,
+    "accuracy_std": 0.031199121977667617,
+    "roc_auc_mean": 0.9598316713515403,
+    "roc_auc_std": 0.024151903157197264,
+    "f1_mean": 0.9290156406483007,
+    "f1_std": 0.03647748004309932
+  },
+  "held_out": {
+    "accuracy": 0.7362637362637363,
+    "roc_auc": 0.8532770605759682,
+    "support": 91
+  },
+  "artifacts": {
+    "model": "C:\\ChainTrust\\ml-service\\model\\model.pkl",
+    "policy_thresholds": "C:\\ChainTrust\\ml-service\\model\\policy_thresholds.json"
+  }
+}

@@ -1,6 +1,6 @@
-import React from "react";
+﻿import React from "react";
 import { NavLink, Link } from "react-router-dom";
-import { Shield } from "lucide-react";
+import { LogIn, LogOut, Shield } from "lucide-react";
 
 const links = [
     { to: "/", label: "Home" },
@@ -10,7 +10,7 @@ const links = [
     { to: "/about", label: "About" },
 ];
 
-export default function Navbar() {
+export default function Navbar({ onOpenLogin, onLogout, currentUser }) {
     return (
         <nav className="navbar">
             <Link to="/" className="navbar-brand">
@@ -34,9 +34,23 @@ export default function Navbar() {
                 ))}
             </ul>
 
-            <Link to="/analyze" className="btn btn-primary btn-sm">
-                Analyze Wallet →
-            </Link>
+            <div className="navbar-actions">
+                {currentUser ? (
+                    <>
+                        <span className="badge badge-success">Hi, {currentUser.fullName || "User"}</span>
+                        <button type="button" className="btn btn-ghost btn-sm" onClick={onLogout}>
+                            <LogOut size={14} /> Logout
+                        </button>
+                    </>
+                ) : (
+                    <button type="button" className="btn btn-ghost btn-sm" onClick={onOpenLogin}>
+                        <LogIn size={14} /> Login
+                    </button>
+                )}
+                <Link to="/analyze" className="btn btn-primary btn-sm">
+                    Analyze Wallet
+                </Link>
+            </div>
         </nav>
     );
 }

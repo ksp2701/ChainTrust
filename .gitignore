@@ -1,64 +1,43 @@
-<<<<<<< HEAD
 # IDEs
 .idea/
 .vscode/
 *.swp
 *.swo
 
-# Build Artifacts
+# OS
+.DS_Store
+Thumbs.db
+
+# Env and secrets
+.env
+.env.local
+API.txt
+
+# Build artifacts
 target/
 dist/
 build/
 out/
+backend/target/
+*.log
 
-# Dependencies
+# Node
 node_modules/
+frontend/node_modules/
+frontend/build/
+frontend/.pnp
+frontend/.pnp.js
+
+# Python
 venv/
 .venv/
 env/
 __pycache__/
 *.pyc
-
-# ML Models
-ml-service/model/model.pkl
-
-# Secrets and Keys
-API.txt
-.env
-.env.local
-
-# Frontend Build
-frontend/build/
-frontend/.pnp
-frontend/.pnp.js
-
-# Os
-.DS_Store
-Thumbs.db
-=======
-# OS
-.DS_Store
-Thumbs.db
-
-# Env
-.env
-
-# Java
-backend/target/
-*.log
-
-# Node
-frontend/node_modules/
-frontend/build/
-
-# Python
-__pycache__/
-*.pyc
 *.pyo
 .pytest_cache/
-.venv/
 
 # Model artifacts
 ml-service/model/*.pkl
+!ml-service/model/model.pkl
 !ml-service/model/.gitkeep
->>>>>>> e6bab9ff3e4c81f53c66b24db7e96dd1d61d97c1

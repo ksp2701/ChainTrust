@@ -37,7 +37,7 @@ const STATS = [
     { value: 5, suffix: "", label: "Credit Tiers" },
 ];
 
-export default function HomePage() {
+export default function HomePage({ onOpenLogin, currentUser }) {
     return (
         <div>
             {/* Hero */}
@@ -64,6 +64,11 @@ export default function HomePage() {
                             <Link to="/loan" className="btn btn-ghost btn-lg">
                                 Apply for Loan
                             </Link>
+                            {!currentUser && (
+                                <button type="button" className="btn btn-ghost btn-lg" onClick={onOpenLogin}>
+                                    Login / Register
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>

@@ -17,7 +17,7 @@ app.add_middleware(
 )
 
 MODEL_PATH = "/app/model/model.pkl"
-_bundle = None  # {"model": ..., "features": [...]}
+_bundle = None  # {"model": ..., "features": [...]} 
 
 FEATURE_LABELS = {
     "wallet_age_days": "Wallet Age",
@@ -91,7 +91,7 @@ def predict(feat: FeatureSchema) -> RiskResult:
     feature_names = _bundle["features"]
 
     # Build feature dict and handle legacy avg_tx_value alias.
-    feat_dict = feat.model_dump()
+    feat_dict = feat.dict()
     if feat_dict.get("avg_tx_value_eth") is None and feat_dict.get("avg_tx_value") is not None:
         feat_dict["avg_tx_value_eth"] = feat_dict["avg_tx_value"]
 
@@ -137,7 +137,7 @@ def predict(feat: FeatureSchema) -> RiskResult:
     )
 
 
-def _build_denial_reasons(feat: FeatureSchema, trust_prob: float) -> list[str]:
+def _build_denial_reasons(feat: FeatureSchema, trust_prob: float) -> list:
     reasons = []
     if feat.wallet_age_days < 60:
         reasons.append("Wallet age below 60 days - insufficient history")

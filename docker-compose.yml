@@ -31,6 +31,8 @@ services:
         condition: service_started
     ports:
       - "8080:8080"
+    volumes:
+      - ./ml-service/model:/app/model:ro
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/chaintrust
       SPRING_DATASOURCE_USERNAME: postgres
@@ -38,6 +40,16 @@ services:
       ML_SERVICE_URL: ${ML_SERVICE_URL:-http://ml-service:8000}
       ETH_RPC_URL: ${ETH_RPC_URL:-https://sepolia.infura.io/v3/<PROJECT_ID>}
       CONTRACT_ADDRESS: ${CONTRACT_ADDRESS:-<DEPLOYED_CONTRACT_ADDRESS>}
+      ETHERSCAN_API_KEYS: ${ETHERSCAN_API_KEYS:-}
+      ETHERSCAN_CHAIN_ID: ${ETHERSCAN_CHAIN_ID:-1}
+      WALLET_SYNTHETIC_FALLBACK_ENABLED: ${WALLET_SYNTHETIC_FALLBACK_ENABLED:-false}
+      BLOCKCHAIN_ENABLED: ${BLOCKCHAIN_ENABLED:-false}
+      BLOCKCHAIN_REQUIRED: ${BLOCKCHAIN_REQUIRED:-false}
+      BLOCKCHAIN_CHAIN_ID: ${BLOCKCHAIN_CHAIN_ID:-11155111}
+      BLOCKCHAIN_PRIVATE_KEY: ${BLOCKCHAIN_PRIVATE_KEY:-}
+      BLOCKCHAIN_GAS_LIMIT: ${BLOCKCHAIN_GAS_LIMIT:-550000}
+      BLOCKCHAIN_GAS_PRICE_WEI: ${BLOCKCHAIN_GAS_PRICE_WEI:-0}
+      LOAN_POLICY_THRESHOLDS_FILE: ${LOAN_POLICY_THRESHOLDS_FILE:-/app/model/policy_thresholds.json}
 
   frontend:
     build: ./frontend

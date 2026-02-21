@@ -3,9 +3,9 @@ package com.chaintrust.service;
 import com.chaintrust.model.TxRecord;
 import com.chaintrust.model.WalletFeatures;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.boot.web.client.RestTemplateBuilder;
 
 import java.math.BigDecimal;
 import java.time.Duration;
@@ -13,13 +13,20 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 /**
- * Fetches real transaction history from Etherscan and derives ML features.
- * Falls back to deterministic-but-realistic synthetic data when no API key is set.
+ * Fetches wallet transactions from Etherscan and derives model features.
+ * Synthetic history is optional and disabled by default for real mode.
  */
 @Service
 public class WalletHistoryService {
@@ -27,7 +34,6 @@ public class WalletHistoryService {
     private static final double WEI_TO_ETH = 1e-18;
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ISO_LOCAL_DATE;
 
-    // Well-known DeFi protocol addresses (lowercase)
     private static final Map<String, String> PROTOCOL_MAP = Map.of(
         "0x7a250d5630b4cf539739df2c5dacb4c659f2488d", "Uniswap V2",
         "0xe592427a0aece92de3edee1f18e0157c05861564", "Uniswap V3",
@@ -42,56 +48,56 @@ public class WalletHistoryService {
     );
 
     private static final Set<String> FLASH_LOAN_SIGNATURES = Set.of(
-        "0x5cffe9de", "0xab9c4b5d", "0x1b11d0b4" // Aave flashLoan, flashLoanSimple
+        "0x5cffe9de", "0xab9c4b5d", "0x1b11d0b4"
     );
 
     private static final Set<String> NFT_CONTRACTS = Set.of(
-        "0xbc4ca0eda7647a8ab7c2061c2e118a18a936f13d", // BAYC
-        "0x60e4d786628fea6478f785a6d7e704777c86a7c6", // MAYC
-        "0x23581767a106ae21c074b2276d25e5c3e136a68b"  // Moonbirds
+        "0xbc4ca0eda7647a8ab7c2061c2e118a18a936f13d",
+        "0x60e4d786628fea6478f785a6d7e704777c86a7c6",
+        "0x23581767a106ae21c074b2276d25e5c3e136a68b"
     );
 
     private final RestTemplate restTemplate;
-    private final List<String> apiKeys;   // up to 3 Etherscan keys, rotated round-robin
+    private final List<String> apiKeys;
     private final AtomicInteger keyIndex = new AtomicInteger(0);
+    private final long etherscanChainId;
+    private final boolean syntheticFallbackEnabled;
 
     public WalletHistoryService(
             RestTemplateBuilder builder,
-            @Value("${etherscan.api-keys:}") String apiKeysCsv) {
+            @Value("${etherscan.api-keys:}") String apiKeysCsv,
+            @Value("${etherscan.chain-id:1}") long etherscanChainId,
+            @Value("${wallet.synthetic-fallback-enabled:false}") boolean syntheticFallbackEnabled) {
         this.restTemplate = builder
                 .setConnectTimeout(Duration.ofSeconds(5))
                 .setReadTimeout(Duration.ofSeconds(10))
                 .build();
-        // Accept comma-separated list: "KEY1,KEY2,KEY3"
         this.apiKeys = Arrays.stream(apiKeysCsv.split(","))
                 .map(String::trim)
                 .filter(k -> !k.isBlank())
                 .toList();
+        this.etherscanChainId = etherscanChainId;
+        this.syntheticFallbackEnabled = syntheticFallbackEnabled;
     }
 
-    /** Picks the next API key in round-robin order. */
-    private String nextKey() {
-        if (apiKeys.isEmpty()) return "";
-        return apiKeys.get(keyIndex.getAndIncrement() % apiKeys.size());
-    }
-
-    /**
-     * Returns up to 100 recent transactions.
-     */
     public List<TxRecord> fetchHistory(String address) {
         if (apiKeys.isEmpty()) {
-            return buildSyntheticHistory(address);
+            if (syntheticFallbackEnabled) {
+                return buildSyntheticHistory(address);
+            }
+            throw new IllegalStateException("ETHERSCAN_API_KEYS is missing and synthetic fallback is disabled");
         }
+
         try {
             return fetchFromEtherscan(address);
-        } catch (Exception e) {
-            return buildSyntheticHistory(address);
+        } catch (RuntimeException ex) {
+            if (syntheticFallbackEnabled) {
+                return buildSyntheticHistory(address);
+            }
+            throw ex;
         }
     }
 
-    /**
-     * Derives WalletFeatures from a list of transactions.
-     */
     public WalletFeatures deriveFeatures(String address, List<TxRecord> txs) {
         WalletFeatures f = new WalletFeatures();
         f.setAddress(address);
@@ -109,8 +115,8 @@ public class WalletHistoryService {
         long walletAgeDays = Math.max(1, (nowTs - minTs) / 86400);
         f.setWalletAgeDays(walletAgeDays);
         f.setTxCount(txs.size());
-        f.setFirstSeenDate(LocalDate.ofEpochDay(minTs / 86400).format(DATE_FMT));
-        f.setLastSeenDate(LocalDate.ofEpochDay(maxTs / 86400).format(DATE_FMT));
+        f.setFirstSeenDate(LocalDate.ofInstant(Instant.ofEpochSecond(minTs), ZoneOffset.UTC).format(DATE_FMT));
+        f.setLastSeenDate(LocalDate.ofInstant(Instant.ofEpochSecond(maxTs), ZoneOffset.UTC).format(DATE_FMT));
 
         double[] values = txs.stream().mapToDouble(TxRecord::getValueEth).toArray();
         double avg = Arrays.stream(values).average().orElse(0);
@@ -125,11 +131,12 @@ public class WalletHistoryService {
 
         long incoming = txs.stream().filter(t -> t.getTo() != null && t.getTo().equalsIgnoreCase(address)).count();
         long outgoing = txs.stream().filter(t -> t.getFrom() != null && t.getFrom().equalsIgnoreCase(address)).count();
-        f.setIncomingOutgoingRatio(outgoing == 0 ? 1.0 : (double) incoming / (incoming + outgoing));
+        long totalDirectional = incoming + outgoing;
+        f.setIncomingOutgoingRatio(totalDirectional == 0 ? 0.0 : (double) incoming / totalDirectional);
 
         Set<String> contracts = txs.stream()
                 .filter(TxRecord::isContract)
-                .map(t -> t.getTo() != null ? t.getTo().toLowerCase() : "")
+                .map(t -> t.getTo() != null ? t.getTo().toLowerCase(Locale.ROOT) : "")
                 .filter(s -> !s.isEmpty())
                 .collect(Collectors.toSet());
         f.setUniqueContracts(contracts.size());
@@ -144,47 +151,101 @@ public class WalletHistoryService {
         f.setFlashLoanCount((int) txs.stream().filter(t -> "FLASH_LOAN".equals(t.getRiskFlag())).count());
         f.setLiquidationEvents((int) txs.stream().filter(t -> "LIQUIDATION".equals(t.getRiskFlag())).count());
         f.setNftTransactionCount((int) txs.stream().filter(t -> "NFT".equals(t.getRiskFlag())).count());
-
-        // Cross-chain — heuristic: if dormant periods exist between large gaps
         f.setCrossChainCount(estimateCrossChainCount(txs));
-
-        // Dormant period — largest gap between consecutive txs (days)
         f.setDormantPeriodDays(computeMaxDormantDays(txs));
 
-        // Collateral ratio — synthetic estimate based on defi activity vs flash loans
         double collateral = 1.5 + (protocolsUsed.size() * 0.15) - (f.getFlashLoanCount() * 0.3)
                 - (f.getLiquidationEvents() * 0.5);
         f.setCollateralRatio(Math.max(0.1, Math.min(4.0, collateral)));
 
-        // Rugpull exposure — fraction of txns to flagged or unknown tiny-value contracts
         long rugExposure = txs.stream().filter(t -> "RUGPULL".equals(t.getRiskFlag())).count();
         f.setRugpullExposureScore(Math.min(1.0, (double) rugExposure / Math.max(1, txs.size())));
-
         return f;
     }
 
-    // ── Etherscan fetch ────────────────────────────────────────────────────
-
-    @SuppressWarnings("unchecked")
     private List<TxRecord> fetchFromEtherscan(String address) {
-        String key = nextKey();
-        String url = "https://api.etherscan.io/v2/api"
-                + "?chainid=1"
-                + "&module=account&action=txlist"
-                + "&address=" + address
-                + "&startblock=0&endblock=99999999"
-                + "&page=1&offset=100&sort=desc"
-                + "&apikey=" + key;
-
-        Map<String, Object> resp = restTemplate.getForObject(url, Map.class);
-        if (resp == null || !"1".equals(resp.get("status"))) {
-            return buildSyntheticHistory(address);
+        String lastError = "Unknown Etherscan error";
+        for (String key : orderedApiKeys()) {
+            AttemptResult attempt = attemptFetch(address, key);
+            if (attempt.type == AttemptType.SUCCESS) {
+                return attempt.records;
+            }
+            if (attempt.type == AttemptType.NO_TRANSACTIONS) {
+                return List.of();
+            }
+            lastError = attempt.error;
         }
 
-        List<Map<String, Object>> rawTxs = (List<Map<String, Object>>) resp.get("result");
-        if (rawTxs == null) return buildSyntheticHistory(address);
+        if (syntheticFallbackEnabled) {
+            return buildSyntheticHistory(address);
+        }
+        throw new IllegalStateException("Unable to fetch Etherscan history: " + lastError);
+    }
 
-        List<TxRecord> records = new ArrayList<>();
+    private List<String> orderedApiKeys() {
+        if (apiKeys.isEmpty()) {
+            return List.of("");
+        }
+        int start = Math.floorMod(keyIndex.getAndIncrement(), apiKeys.size());
+        List<String> ordered = new ArrayList<>(apiKeys.size());
+        for (int i = 0; i < apiKeys.size(); i++) {
+            ordered.add(apiKeys.get((start + i) % apiKeys.size()));
+        }
+        return ordered;
+    }
+
+    @SuppressWarnings("unchecked")
+    private AttemptResult attemptFetch(String address, String key) {
+        try {
+            String url = "https://api.etherscan.io/v2/api"
+                    + "?chainid=" + etherscanChainId
+                    + "&module=account&action=txlist"
+                    + "&address=" + address
+                    + "&startblock=0&endblock=99999999"
+                    + "&page=1&offset=100&sort=desc"
+                    + "&apikey=" + key;
+
+            Map<String, Object> resp = restTemplate.getForObject(url, Map.class);
+            if (resp == null) {
+                return AttemptResult.retry("Empty Etherscan response");
+            }
+
+            String status = str(resp.get("status"));
+            Object resultObj = resp.get("result");
+            String message = str(resp.get("message"));
+            String resultText = resultObj instanceof String ? (String) resultObj : "";
+
+            if ("1".equals(status) && resultObj instanceof List<?> rawList) {
+                List<Map<String, Object>> rawTxs = (List<Map<String, Object>>) rawList;
+                return AttemptResult.success(parseTransactions(rawTxs));
+            }
+
+            String normalized = (message + " " + resultText).toLowerCase(Locale.ROOT);
+            if (normalized.contains("no transactions found")) {
+                return AttemptResult.noTransactions();
+            }
+
+            if (isRetryable(normalized)) {
+                return AttemptResult.retry("Etherscan retryable response: " + message + " " + resultText);
+            }
+
+            return AttemptResult.retry("Etherscan non-success response: " + message + " " + resultText);
+        } catch (Exception ex) {
+            return AttemptResult.retry("Etherscan request failed: " + ex.getMessage());
+        }
+    }
+
+    private boolean isRetryable(String message) {
+        return message.contains("rate limit")
+                || message.contains("max rate limit")
+                || message.contains("invalid api key")
+                || message.contains("too many invalid api key")
+                || message.contains("temporarily unavailable")
+                || message.contains("timeout");
+    }
+
+    private List<TxRecord> parseTransactions(List<Map<String, Object>> rawTxs) {
+        List<TxRecord> records = new ArrayList<>(rawTxs.size());
         for (Map<String, Object> raw : rawTxs) {
             TxRecord rec = new TxRecord();
             rec.setHash(str(raw.get("hash")));
@@ -197,84 +258,96 @@ public class WalletHistoryService {
             try {
                 BigDecimal wei = new BigDecimal(weiStr);
                 rec.setValueEth(wei.multiply(BigDecimal.valueOf(WEI_TO_ETH)).doubleValue());
-            } catch (Exception e) {
+            } catch (Exception ex) {
                 rec.setValueEth(0.0);
             }
 
-            boolean isContract = "1".equals(str(raw.get("contractAddress"))) || !str(raw.get("input")).equals("0x");
+            String contractAddress = str(raw.get("contractAddress"));
+            String input = str(raw.get("input"));
+            boolean hasContractAddress = !contractAddress.isBlank() && !"0x".equalsIgnoreCase(contractAddress);
+            boolean hasMethodInput = !input.isBlank() && !"0x".equals(input);
+            boolean isContract = hasContractAddress || hasMethodInput;
             rec.setContract(isContract);
 
-            String input = str(raw.get("input"));
-            String methodId = input.length() >= 10 ? input.substring(0, 10) : "0x";
+            String methodId = input.length() >= 10 ? input.substring(0, 10).toLowerCase(Locale.ROOT) : "0x";
             rec.setMethodId(methodId);
 
-            String toAddr = rec.getTo() != null ? rec.getTo().toLowerCase() : "";
-            rec.setProtocol(PROTOCOL_MAP.getOrDefault(toAddr, isContract ? "DeFi Contract" : "ETH Transfer"));
+            String toAddr = rec.getTo() != null ? rec.getTo().toLowerCase(Locale.ROOT) : "";
+            rec.setProtocol(PROTOCOL_MAP.getOrDefault(toAddr, isContract ? "Contract Interaction" : "ETH Transfer"));
             rec.setRiskFlag(classifyRisk(methodId, toAddr, rec.getValueEth()));
             records.add(rec);
         }
         return records;
     }
 
-    // ── Synthetic history (deterministic per address) ──────────────────────
-
     private List<TxRecord> buildSyntheticHistory(String address) {
-        int hash = Math.abs(address.toLowerCase().hashCode());
+        int hash = Math.abs(address.toLowerCase(Locale.ROOT).hashCode());
         Random rng = new Random(hash);
-        int n = 20 + (hash % 80); // 20-100 txns per wallet
+        int n = 20 + (hash % 80);
         long nowTs = Instant.now().getEpochSecond();
-        long startTs = nowTs - (long)(60 + (hash % 700)) * 86400; // 60-760 days ago
+        long startTs = nowTs - (long) (60 + (hash % 700)) * 86400;
 
         List<String> protocols = List.of("Uniswap V2", "Uniswap V3", "Aave", "Compound", "SushiSwap", "1inch", "ETH Transfer");
-        List<String> flags = List.of("NORMAL", "NORMAL", "NORMAL", "NORMAL", "NFT", "FLASH_LOAN", "LIQUIDATION", "RUGPULL");
-
         List<TxRecord> records = new ArrayList<>();
         long currentTs = startTs;
+
         for (int i = 0; i < n; i++) {
-            currentTs += (long)(rng.nextInt(3) + 1) * 86400; // 1-3 days between txns
-            if (currentTs > nowTs) break;
+            currentTs += (long) (rng.nextInt(3) + 1) * 86400;
+            if (currentTs > nowTs) {
+                break;
+            }
 
             String protocol = protocols.get(rng.nextInt(protocols.size()));
             double value = 0.001 + rng.nextDouble() * 2.0;
             String riskFlag = "NORMAL";
             int flagChance = rng.nextInt(20);
-            if (flagChance == 0) riskFlag = "FLASH_LOAN";
-            else if (flagChance == 1) riskFlag = "LIQUIDATION";
-            else if (flagChance < 4) riskFlag = "NFT";
-            else if (flagChance == 4) riskFlag = "RUGPULL";
+            if (flagChance == 0) {
+                riskFlag = "FLASH_LOAN";
+            } else if (flagChance == 1) {
+                riskFlag = "LIQUIDATION";
+            } else if (flagChance < 4) {
+                riskFlag = "NFT";
+            } else if (flagChance == 4) {
+                riskFlag = "RUGPULL";
+            }
 
             TxRecord rec = new TxRecord(
-                String.format("0x%064x", (long) hash * i),
-                15000000L + i * 100,
-                currentTs,
-                address,
-                "0x" + String.format("%040x", rng.nextLong() & 0xFFFFFFFFFFFFFFFFL),
-                value,
-                !protocol.equals("ETH Transfer"),
-                "0x" + String.format("%08x", rng.nextInt()),
-                protocol,
-                riskFlag
+                    String.format("0x%064x", (long) hash * i),
+                    15000000L + i * 100,
+                    currentTs,
+                    address,
+                    "0x" + String.format("%040x", rng.nextLong() & 0xFFFFFFFFFFFFFFFFL),
+                    value,
+                    !protocol.equals("ETH Transfer"),
+                    "0x" + String.format("%08x", rng.nextInt()),
+                    protocol,
+                    riskFlag
             );
             records.add(rec);
         }
         return records;
     }
 
-    // ── Helpers ────────────────────────────────────────────────────────────
-
     private String classifyRisk(String methodId, String toAddr, double valueEth) {
-        if (FLASH_LOAN_SIGNATURES.contains(methodId)) return "FLASH_LOAN";
-        if (NFT_CONTRACTS.contains(toAddr)) return "NFT";
-        if (valueEth < 0.00001 && !toAddr.isEmpty()) return "RUGPULL"; // dust / scam
+        if (FLASH_LOAN_SIGNATURES.contains(methodId)) {
+            return "FLASH_LOAN";
+        }
+        if (NFT_CONTRACTS.contains(toAddr)) {
+            return "NFT";
+        }
+        if (valueEth < 0.00001 && !toAddr.isEmpty()) {
+            return "RUGPULL";
+        }
         return "NORMAL";
     }
 
     private int estimateCrossChainCount(List<TxRecord> txs) {
-        // Heuristic: gaps > 14 days where wallet also interacts with bridge-like contracts
         long[] timestamps = txs.stream().mapToLong(TxRecord::getTimestamp).sorted().toArray();
         int count = 0;
         for (int i = 1; i < timestamps.length; i++) {
-            if ((timestamps[i] - timestamps[i - 1]) > 14L * 86400) count++;
+            if ((timestamps[i] - timestamps[i - 1]) > 14L * 86400) {
+                count++;
+            }
         }
         return Math.min(count, 10);
     }
@@ -284,13 +357,52 @@ public class WalletHistoryService {
         double maxGap = 0;
         for (int i = 1; i < timestamps.length; i++) {
             double gap = (timestamps[i] - timestamps[i - 1]) / 86400.0;
-            if (gap > maxGap) maxGap = gap;
+            if (gap > maxGap) {
+                maxGap = gap;
+            }
         }
         return maxGap;
     }
 
-    private static String str(Object o) { return o != null ? o.toString() : ""; }
+    private static String str(Object o) {
+        return o != null ? o.toString() : "";
+    }
+
     private static long parseLong(Object o) {
-        try { return Long.parseLong(str(o)); } catch (Exception e) { return 0L; }
+        try {
+            return Long.parseLong(str(o));
+        } catch (Exception ex) {
+            return 0L;
+        }
+    }
+
+    private enum AttemptType {
+        SUCCESS,
+        NO_TRANSACTIONS,
+        RETRY
+    }
+
+    private static final class AttemptResult {
+        private final AttemptType type;
+        private final List<TxRecord> records;
+        private final String error;
+
+        private AttemptResult(AttemptType type, List<TxRecord> records, String error) {
+            this.type = type;
+            this.records = records;
+            this.error = error;
+        }
+
+        private static AttemptResult success(List<TxRecord> records) {
+            return new AttemptResult(AttemptType.SUCCESS, records, "");
+        }
+
+        private static AttemptResult noTransactions() {
+            return new AttemptResult(AttemptType.NO_TRANSACTIONS, Collections.emptyList(), "");
+        }
+
+        private static AttemptResult retry(String error) {
+            return new AttemptResult(AttemptType.RETRY, Collections.emptyList(), error);
+        }
     }
 }

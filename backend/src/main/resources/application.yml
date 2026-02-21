@@ -1,20 +1,22 @@
 server:
   port: 8080
+  error:
+    include-message: always
 
 spring:
   datasource:
-    url: jdbc:h2:mem:chaintrust;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-    username: sa
-    password: ""
-    driver-class-name: org.h2.Driver
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/chaintrust}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
+    driver-class-name: ${SPRING_DATASOURCE_DRIVER_CLASS_NAME:org.postgresql.Driver}
   jpa:
-    database-platform: org.hibernate.dialect.H2Dialect
+    database-platform: ${SPRING_JPA_DATABASE_PLATFORM:org.hibernate.dialect.PostgreSQLDialect}
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
     open-in-view: false
   h2:
     console:
-      enabled: true
+      enabled: ${SPRING_H2_CONSOLE_ENABLED:false}
       path: /h2-console
 
 ml:
@@ -27,3 +29,37 @@ eth:
 
 etherscan:
   api-keys: ${ETHERSCAN_API_KEYS:}
+  chain-id: ${ETHERSCAN_CHAIN_ID:1}
+
+wallet:
+  synthetic-fallback-enabled: ${WALLET_SYNTHETIC_FALLBACK_ENABLED:false}
+
+blockchain:
+  enabled: ${BLOCKCHAIN_ENABLED:false}
+  required: ${BLOCKCHAIN_REQUIRED:false}
+  chain-id: ${BLOCKCHAIN_CHAIN_ID:11155111}
+  contract-address: ${CONTRACT_ADDRESS:0x0000000000000000000000000000000000000000}
+  private-key: ${BLOCKCHAIN_PRIVATE_KEY:}
+  gas-limit: ${BLOCKCHAIN_GAS_LIMIT:550000}
+  gas-price-wei: ${BLOCKCHAIN_GAS_PRICE_WEI:0}
+
+loan:
+  policy:
+    thresholds-file: ${LOAN_POLICY_THRESHOLDS_FILE:/app/model/policy_thresholds.json}
+    reject-burn-addresses: ${LOAN_POLICY_REJECT_BURN_ADDRESSES:true}
+    reject-known-contract-addresses: ${LOAN_POLICY_REJECT_KNOWN_CONTRACT_ADDRESSES:true}
+    reject-contract-addresses: ${LOAN_POLICY_REJECT_CONTRACT_ADDRESSES:true}
+    require-contract-check-success: ${LOAN_POLICY_REQUIRE_CONTRACT_CHECK_SUCCESS:false}
+    reject-rugpull-exposure-gte: ${LOAN_POLICY_REJECT_RUGPULL_EXPOSURE_GTE:0.70}
+    reject-wallet-age-days-lt: ${LOAN_POLICY_REJECT_WALLET_AGE_DAYS_LT:14}
+    reject-liquidation-events-gte: ${LOAN_POLICY_REJECT_LIQUIDATION_EVENTS_GTE:3}
+    max-recommended-limit-usd: ${LOAN_POLICY_MAX_RECOMMENDED_LIMIT_USD:100000}
+    default-thresholds:
+      platinum-min-trust: ${LOAN_POLICY_DEFAULT_PLATINUM_MIN_TRUST:0.85}
+      gold-min-trust: ${LOAN_POLICY_DEFAULT_GOLD_MIN_TRUST:0.70}
+      silver-min-trust: ${LOAN_POLICY_DEFAULT_SILVER_MIN_TRUST:0.55}
+      bronze-min-trust: ${LOAN_POLICY_DEFAULT_BRONZE_MIN_TRUST:0.40}
+      silver-max-amount: ${LOAN_POLICY_DEFAULT_SILVER_MAX_AMOUNT:5000}
+      bronze-max-amount: ${LOAN_POLICY_DEFAULT_BRONZE_MAX_AMOUNT:1000}
+    burn-addresses: ${LOAN_POLICY_BURN_ADDRESSES:0x0000000000000000000000000000000000000000,0x000000000000000000000000000000000000dEaD}
+    known-contract-addresses: ${LOAN_POLICY_KNOWN_CONTRACT_ADDRESSES:0x7a250d5630b4cf539739df2c5dacb4c659f2488d,0xe592427a0aece92de3edee1f18e0157c05861564,0x68b3465833fb72a70ecdf485e0e4c7bd8665fc45,0x1111111254fb6c44bac0bed2854e76f90643097d}
