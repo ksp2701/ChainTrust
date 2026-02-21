@@ -162,12 +162,12 @@ export default function LoginModal({ isOpen, onClose, onAuthSuccess }) {
                         <input
                             className="ct-input"
                             type="tel"
-                            placeholder="Phone (+1234567890)"
+                            placeholder="Phone (+1 234-567-8901)"
                             value={form.phone}
                             onChange={(event) => updateField("phone", event.target.value)}
                             required
-                            pattern="^\\+?[0-9]{7,20}$"
-                            title="Phone must be 7-20 digits and may start with +"
+                            pattern="^\\+?[0-9\\s\\-()]{7,25}$"
+                            title="Phone can include digits, spaces, (), and - with an optional leading +"
                         />
                     )}
 

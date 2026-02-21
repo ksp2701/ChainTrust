@@ -37,7 +37,7 @@ public class AuthService {
         String phone = requireTrimmed(request.getPhone(), "Phone number is required");
         String phoneNormalized = normalizePhone(phone);
         if (phoneNormalized == null) {
-            throw new IllegalArgumentException("Phone number is required");
+            throw new IllegalArgumentException("Phone must be 7-20 digits and may start with +");
         }
         String walletAddress = optionalTrimmed(request.getMetaMaskAddress());
         String walletAddressNormalized = normalizeWallet(walletAddress);
@@ -126,14 +126,16 @@ public class AuthService {
         if (phone == null) {
             return null;
         }
-        String compact = phone.replace(" ", "").replace("-", "").replace("(", "").replace(")", "");
+        String compact = phone.replaceAll("[\\s\\-()]", "");
         if (compact.isBlank()) {
             return null;
         }
-        if (compact.startsWith("+")) {
-            return "+" + compact.substring(1).replaceAll("[^0-9]", "");
+        boolean hasLeadingPlus = compact.startsWith("+");
+        String digits = hasLeadingPlus ? compact.substring(1) : compact;
+        if (!digits.matches("^[0-9]{7,20}$")) {
+            return null;
         }
-        return compact.replaceAll("[^0-9]", "");
+        return hasLeadingPlus ? "+" + digits : digits;
     }
 
     private static String normalizeWallet(String walletAddress) {

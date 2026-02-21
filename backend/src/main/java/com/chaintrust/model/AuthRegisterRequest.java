@@ -18,8 +18,8 @@ public class AuthRegisterRequest {
 
     @NotBlank(message = "Phone number is required")
     @Pattern(
-            regexp = "^\\+?[0-9]{7,20}$",
-            message = "Phone must be 7-20 digits and may start with +"
+            regexp = "^\\+?[0-9\\s\\-()]{7,25}$",
+            message = "Phone can include digits, spaces, (), and - with an optional leading +"
     )
     private String phone;
 
