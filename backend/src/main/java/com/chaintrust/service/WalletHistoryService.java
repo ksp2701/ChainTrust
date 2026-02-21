@@ -104,7 +104,7 @@ public class WalletHistoryService {
 
         if (txs.isEmpty()) {
             f.setWalletAgeDays(1);
-            f.setCollateralRatio(1.0);
+            f.setCollateralRatio(1.5); // neutral default — avoids triggering the <1.2 denial threshold
             return f;
         }
 
@@ -335,9 +335,9 @@ public class WalletHistoryService {
         if (NFT_CONTRACTS.contains(toAddr)) {
             return "NFT";
         }
-        if (valueEth < 0.00001 && !toAddr.isEmpty()) {
-            return "RUGPULL";
-        }
+        // NOTE: Small-value transactions (< 0.00001 ETH) are NOT classified as RUGPULL.
+        // Many legitimate txs (ERC-20 approvals, small swaps, gas-only calls) have near-zero
+        // ETH value. Labeling them RUGPULL inflated rugpullExposureScore for normal wallets.
         return "NORMAL";
     }
 

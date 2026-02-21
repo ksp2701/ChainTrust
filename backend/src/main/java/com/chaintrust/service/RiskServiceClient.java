@@ -27,8 +27,8 @@ public class RiskServiceClient {
         @Value("${ml.service.url}") String mlServiceUrl
     ) {
         this.restTemplate = restTemplateBuilder
-            .setConnectTimeout(Duration.ofSeconds(3))
-            .setReadTimeout(Duration.ofSeconds(5))
+            .setConnectTimeout(Duration.ofSeconds(15))  // Render free tier needs time to wake up
+            .setReadTimeout(Duration.ofSeconds(30))     // cold start can take 30-60s
             .build();
         this.featureService = featureService;
         this.mlServiceUrl = mlServiceUrl;
