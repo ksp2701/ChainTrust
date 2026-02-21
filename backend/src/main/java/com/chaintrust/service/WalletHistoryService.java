@@ -189,7 +189,9 @@ public class WalletHistoryService {
         // Use true total tx count if available, else fall back to list size
         long effectiveTxCount = (totalTxCount > 0) ? totalTxCount : txs.size();
         f.setTxCount((int) Math.min(effectiveTxCount, Integer.MAX_VALUE));
-        f.setFirstSeenDate(LocalDate.ofInstant(Instant.ofEpochSecond(minTs), ZoneOffset.UTC).format(DATE_FMT));
+        // Use true first-tx timestamp for firstSeenDate (same source as walletAgeDays)
+        long firstSeenTs = (firstTxTimestamp > 0) ? firstTxTimestamp : minTs;
+        f.setFirstSeenDate(LocalDate.ofInstant(Instant.ofEpochSecond(firstSeenTs), ZoneOffset.UTC).format(DATE_FMT));
         f.setLastSeenDate(LocalDate.ofInstant(Instant.ofEpochSecond(maxTs), ZoneOffset.UTC).format(DATE_FMT));
 
         double[] values = txs.stream().mapToDouble(TxRecord::getValueEth).toArray();

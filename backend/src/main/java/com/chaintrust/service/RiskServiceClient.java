@@ -33,8 +33,8 @@ public class RiskServiceClient {
      * After detecting 502, we ping /health in a loop waiting for the service
      * to wake up before retrying /predict. Max wait = WARMUP_POLLS * WARMUP_POLL_MS.
      */
-    private static final int    WARMUP_POLLS    = 8;
-    private static final long   WARMUP_POLL_MS  = 5_000;  // 8 × 5s = up to 40s warmup
+    private static final int    WARMUP_POLLS    = 14;
+    private static final long   WARMUP_POLL_MS  = 5_000;  // 14 × 5s = 70s warmup window (Render says 50s+)
 
     private final RestTemplate restTemplate;
     private final FeatureService featureService;
