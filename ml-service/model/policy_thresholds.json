@@ -1,11 +1,11 @@
 {
-  "generated_at": "2026-02-21T08:29:38.138112+00:00",
-  "source": "api",
-  "sample_count": 400,
+  "generated_at": "2026-02-21T19:38:44.045619+00:00",
+  "source": "synthetic",
+  "sample_count": 50000,
   "thresholds": {
     "platinum_min_trust": 0.99,
     "gold_min_trust": 0.97,
-    "silver_min_trust": 0.4806,
+    "silver_min_trust": 0.95,
     "bronze_min_trust": 0.25,
     "silver_max_amount": 5000,
     "bronze_max_amount": 1000
