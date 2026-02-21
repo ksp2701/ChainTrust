@@ -10,12 +10,16 @@ It combines:
 - Solidity smart contract + Hardhat (`contracts`)
 - PostgreSQL for persistence
 
+## Live Frontend URL
+
+- https://chain-trust-gold.vercel.app
+
 ## Content Index
 
 - [Screenshots](#screenshots)
 - [System Architecture](#system-architecture)
 - [Tech Stack](#tech-stack)
-- [Websites and External Services Used](#websites-and-external-services-used)
+- [External Services Used](#external-services-used)
 - [Repository Structure](#repository-structure)
 - [Core Features](#core-features)
 - [API Overview](#api-overview)
@@ -85,20 +89,20 @@ Flow:
 | Blockchain | Solidity 0.8.17 + Hardhat + Sepolia/local node | On-chain decision/risk hash registry |
 | Orchestration | Docker Compose | Local multi-service setup |
 
-## Websites and External Services Used
+## External Services Used
 
-These are the services referenced by project config/scripts for local + cloud setup:
+These services are used by the project for source control, hosting, RPC, data, and wallet integration.
 
-| Use Case | Website |
+| Use Case | Service |
 |---|---|
-| Source code | https://github.com/ |
-| Frontend hosting | https://vercel.com/ |
-| Backend/ML hosting options | https://render.com/ , https://railway.app/ |
-| Managed PostgreSQL | https://supabase.com/ |
-| Ethereum RPC (used in examples) | https://www.infura.io/ , https://ethereum-sepolia-rpc.publicnode.com/ |
-| On-chain wallet transaction data | https://etherscan.io/ (API: `https://api.etherscan.io/v2/api`) |
-| Contract explorer (Sepolia) | https://sepolia.etherscan.io/ |
-| Wallet extension (optional) | https://metamask.io/ |
+| Source code | GitHub |
+| Frontend hosting | Vercel |
+| Backend/ML hosting options | Render, Railway |
+| Managed PostgreSQL | Supabase |
+| Ethereum RPC providers | Infura, PublicNode |
+| On-chain wallet transaction data | Etherscan API |
+| Contract explorer | Etherscan (Sepolia) |
+| Wallet extension | MetaMask |
 
 ## Repository Structure
 
@@ -126,8 +130,6 @@ ChainTrust/
 
 ## API Overview
 
-Base URL (local): `http://localhost:8080`
-
 | Endpoint | Method | Description |
 |---|---|---|
 | `/wallet/{address}` | `GET` | Extract wallet features |
@@ -139,10 +141,10 @@ Base URL (local): `http://localhost:8080`
 | `/auth/register` | `POST` | Register account |
 | `/auth/login` | `POST` | Login |
 
-ML service:
-- `http://localhost:8000/health`
-- `http://localhost:8000/predict`
-- `http://localhost:8000/docs`
+ML service endpoints:
+- `/health`
+- `/predict`
+- `/docs`
 
 ## Database Tables
 
@@ -181,9 +183,9 @@ docker compose up --build
 
 ### 3) Open apps
 
-- Frontend: `http://localhost:3000`
-- Backend: `http://localhost:8080`
-- ML Docs: `http://localhost:8000/docs`
+- Frontend runs on port `3000`.
+- Backend runs on port `8080`.
+- ML service runs on port `8000`.
 
 ### 4) Optional: retrain model artifacts
 
@@ -233,7 +235,7 @@ Use deployment output from `contracts/deployments/localhost.json` in root `.env`
 Set in `.env` (or `contracts/.env`):
 
 ```env
-HARDHAT_SEPOLIA_RPC_URL=https://sepolia.infura.io/v3/<project_id>
+HARDHAT_SEPOLIA_RPC_URL=<SEPOLIA_RPC_URL>
 HARDHAT_DEPLOYER_PRIVATE_KEY=<private_key_without_0x>
 HARDHAT_ETHERSCAN_API_KEY=<etherscan_key>
 ```
@@ -303,7 +305,7 @@ cd frontend && npm install && npm start
 cd ml-service && pip install -r requirements.txt && uvicorn main:app --reload --port 8000
 
 # bootstrap labeled outcomes locally
-python scripts/collect_labeled_outcomes.py --backend-url http://localhost:8080 --target-per-class 10
+python scripts/collect_labeled_outcomes.py --backend-url <BACKEND_URL> --target-per-class 10
 ```
 
 ## Security Notes
