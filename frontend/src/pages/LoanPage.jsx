@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { AlertCircle, DollarSign } from "lucide-react";
 import LoanDecisionCard from "../components/LoanDecisionCard";
@@ -26,9 +26,34 @@ export default function LoanPage() {
     const [address, setAddress] = useState("");
     const [amount, setAmount] = useState(5000);
     const [purpose, setPurpose] = useState("trading");
+    const [purposeOpen, setPurposeOpen] = useState(false);
     const [result, setResult] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+    const purposeDropdownRef = useRef(null);
+
+    const selectedPurpose = PURPOSES.find((item) => item.value === purpose) || PURPOSES[0];
+
+    useEffect(() => {
+        function onDocumentMouseDown(event) {
+            if (!purposeDropdownRef.current?.contains(event.target)) {
+                setPurposeOpen(false);
+            }
+        }
+
+        function onDocumentKeyDown(event) {
+            if (event.key === "Escape") {
+                setPurposeOpen(false);
+            }
+        }
+
+        document.addEventListener("mousedown", onDocumentMouseDown);
+        document.addEventListener("keydown", onDocumentKeyDown);
+        return () => {
+            document.removeEventListener("mousedown", onDocumentMouseDown);
+            document.removeEventListener("keydown", onDocumentKeyDown);
+        };
+    }, []);
 
     async function apply() {
         const addr = address.trim();
@@ -110,16 +135,37 @@ export default function LoanPage() {
                             {/* Purpose */}
                             <div style={{ marginBottom: 24 }}>
                                 <label className="label-sm" style={{ display: "block", marginBottom: 6 }}>Loan Purpose</label>
-                                <select
-                                    className="ct-select"
-                                    value={purpose}
-                                    onChange={(e) => setPurpose(e.target.value)}
-                                    style={{ width: "100%" }}
-                                >
-                                    {PURPOSES.map((p) => (
-                                        <option key={p.value} value={p.value}>{p.label}</option>
-                                    ))}
-                                </select>
+                                <div className="ct-dropdown" ref={purposeDropdownRef}>
+                                    <button
+                                        type="button"
+                                        className={`ct-dropdown-trigger${purposeOpen ? " open" : ""}`}
+                                        onClick={() => setPurposeOpen((prev) => !prev)}
+                                        aria-haspopup="listbox"
+                                        aria-expanded={purposeOpen}
+                                    >
+                                        <span>{selectedPurpose.label}</span>
+                                        <span className="ct-dropdown-chevron" aria-hidden="true">v</span>
+                                    </button>
+                                    {purposeOpen && (
+                                        <div className="ct-dropdown-menu" role="listbox" aria-label="Loan purpose options">
+                                            {PURPOSES.map((item) => (
+                                                <button
+                                                    type="button"
+                                                    key={item.value}
+                                                    className={`ct-dropdown-option${purpose === item.value ? " active" : ""}`}
+                                                    onClick={() => {
+                                                        setPurpose(item.value);
+                                                        setPurposeOpen(false);
+                                                    }}
+                                                    role="option"
+                                                    aria-selected={purpose === item.value}
+                                                >
+                                                    {item.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
 
                             {error && (
