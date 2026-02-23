@@ -216,6 +216,23 @@ body::before {
   font-size: 14px;
   outline: none;
   cursor: pointer;
+  color-scheme: dark;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.ct-select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+.ct-select option {
+  background: #0b1835;
+  color: var(--text-primary);
+}
+
+.ct-select option:checked {
+  background: #1a4ea5;
+  color: #ffffff;
 }
 
 .range-slider {
