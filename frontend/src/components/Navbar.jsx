@@ -15,7 +15,7 @@ export default function Navbar({ onOpenLogin, onLogout, currentUser }) {
         <nav className="navbar">
             <Link to="/" className="navbar-brand">
                 <div className="navbar-logo">
-                    <img src="/logo.png" alt="ChainTrust Logo" style={{ height: '24px', width: 'auto' }} />
+                    <img src="/logo.png" alt="ChainTrust Logo" style={{ height: '40px', width: 'auto' }} />
                 </div>
                 ChainTrust
             </Link>
